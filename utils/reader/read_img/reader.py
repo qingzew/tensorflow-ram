@@ -82,59 +82,8 @@ class Reader(object):
         # Display the training images in the visualizer.
         tf.image_summary('images', images, max_images = 3)
 
-#        return images, tf.reshape(label_batch, [batch_size])
         return {'images' : images, 'labels' : labels}
 
-
-    def distorted_inputs(self):
-        """Construct distorted input for training using the Reader ops.
-        Returns:
-            images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
-            labels: Labels. 1D tensor of [batch_size] size.
-        """
-        with tf.name_scope('input'):
-            filenames = []
-            for root, dirs, files in os.walk(self.__data_dir):
-                for f in files:
-                    filenames.append(os.path.join(root, f))
-
-            # Create a queue that produces the filenames to read.
-            self.filename_queue = tf.train.string_input_producer(filenames, num_epochs = self.num_epochs,
-                                                            name = 'string_input_producer')
-
-            # Read examples from files in the filename queue.
-            image, label = self.read_and_decode()
-
-            # Image processing for training the network. Note the many random
-            # distortions applied to the image.
-
-            # Randomly crop a [height, width] section of the image.
-            if self.crop_size is not None:
-                distorted_image = tf.random_crop(image,
-                                                 [self.crop_size, self.crop_size, 3])
-
-            # Randomly flip the image horizontally.
-            distorted_image = tf.image.random_flip_left_right(distorted_image)
-
-            # Because these operations are not commutative, consider randomizing
-            # the order their operation.
-            distorted_image = tf.image.random_brightness(distorted_image, max_delta = 63)
-            distorted_image = tf.image.random_contrast(distorted_image, lower = 0.2, upper = 1.8)
-
-            # Subtract off the mean and divide by the variance of the pixels.
-            float_image = tf.image.per_image_whitening(distorted_image)
-
-            # Ensure that the random shuffling has good mixing properties.
-            min_fraction_of_examples_in_queue = 0.4
-            num_examples_per_epoch = 0.5 * self.batch_size
-            min_queue_examples = int(num_examples_per_epoch *
-                                   min_fraction_of_examples_in_queue)
-            print('Filling queue with %d images before starting to train. '
-                    'This will take a few minutes.' % min_queue_examples)
-
-            # Generate a batch of images and labels by building up a queue of examples.
-            return self._generate_image_and_label_batch(float_image, label, min_queue_examples,
-                                                        self.batch_size, shuffle = True)
 
     def next_train(self):
         """
@@ -162,7 +111,7 @@ class Reader(object):
             image, label = self.read_and_decode(filename_queue)
 
             # Subtract off the mean and divide by the variance of the pixels.
-#            image = tf.image.per_image_whitening(image)
+            # image = tf.image.per_image_whitening(image)
 
             # Ensure that the random shuffling has good mixing properties.
             min_fraction_of_examples_in_queue = 0.4

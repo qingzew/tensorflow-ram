@@ -108,14 +108,8 @@ class Ram(base_model.BaseModel):
         self.w_classifier = self._variable_with_weight_decay('w_classifier', [self.n_f_h, self.n_classes])
         self.b_classifier = self._variable_on_cpu('b_classifier', [self.n_classes], tf.constant_initializer(0.0))
 
-        #self.loc_init = tf.Variable(initial_value = tf.random_uniform([self.n_batch, 2], -1, 1),
-        #                            trainable = False, name = 'loc_init')
-        #self.h_init = tf.Variable(initial_value = tf.zeros([self.n_batch, self.n_f_h]),
-        #                          trainable = False, name = 'h_init')
 
         self.loc_init = tf.random_uniform([self.n_batch, 2], -1, 1)
-        #self.loc_init = tf.zeros([self.n_batch, 2])
-        #self.h_init =  tf.zeros([self.n_batch, self.n_f_h])
         self.h_init =  tf.random_normal(shape = [self.n_batch, self.n_f_h], mean = 0, stddev = 0.01)
 
     def rho(self, loc_tm1, x):
@@ -125,20 +119,14 @@ class Ram(base_model.BaseModel):
             x_t[i] = (n_batch x patch*(2**i) x patch*(2**i) x channels) for i in 0, ..., k
                     [python list, consisting of tensor variables]
 
-            inputs:
-                loc_tm1 = location estimated at t - 1
-                        = l(t-1) = y(t-1), x(t-1)
-                        = (n_batch x 2)
+        inputs:
+            loc_tm1 = location estimated at t - 1
+                    = l(t-1) = y(t-1), x(t-1)
+                    = (n_batch x 2)
                     [tensor variable] and recurrent
-                x = original image
-                  = (n_batch x channels x height x width)
-                    [tensor variable]
-                width = image width = const
-                    [python integer]
-                patch = glimpse patch size = const
-                    [python integer]
-                k = the number of scale = const
-                    [python integer]
+            x = original image
+                 = (n_batch x channels x height x width)
+                [tensor variable]
         """
         x_t = []
         for i in xrange(self.k):
@@ -176,23 +164,23 @@ class Ram(base_model.BaseModel):
 
     def f_g(self, x_t, loc_tm1):
         """
-        g_t = f_g(x_t, loc_tm1)                                 (256 units)
+        g_t = f_g(x_t, loc_tm1)
             = relu(W_1 * h_g + W_2 * h_l + (b_1 + b_2)) where
-            h_g = relu(W_3 * x_t + b_3)                         (128 units)
-            h_l = relu(W_4 * loc_tm1 + b_4)                     (128 units)
+            h_g = relu(W_3 * x_t + b_3)
+            h_l = relu(W_4 * loc_tm1 + b_4)
 
         return:
             g_t = glimps output
                 = (n_batch x num hiddens of g_t)
                 [tensor variable]
 
-            inputs:
-              x_t = sensor output,
-                  where x_t[i] = n_batch x (channels x patch*(2**i) x patch*(2**i)) for i in 0, ..., k
-                  [python list, consisting of tensor variables]
-              loc_tm1 = location estimated at t-1
-                      = l(t-1) = y(t-1), x(t-1)
-                      = (n_batch x 2)
+        inputs:
+            x_t = sensor output,
+                where x_t[i] = n_batch x (channels x patch*(2**i) x patch*(2**i)) for i in 0, ..., k
+                [python list, consisting of tensor variables]
+            loc_tm1 = location estimated at t-1
+                    = l(t-1) = y(t-1), x(t-1)
+                     = (n_batch x 2)
                   [tensor variable] and recurrent
         parameters:
             W_h_g = (k x num_inputs x num hiddens of h_g)
@@ -232,18 +220,18 @@ class Ram(base_model.BaseModel):
                 = (n_batch x num hiddens of h_t)
                   [tensor variable] and recurrent
 
-            inputs:
-                h_tm1 = hidden states estimated at t-1
-                    = (n_batch x num hiddens of h_t)
-                  [tensor variable] and recurrent
-                g_t = glimps output
-                  = (n_batch x num hiddens of g_t)
-                  [tensor variable]
+        inputs:
+            h_tm1 = hidden states estimated at t-1
+                = (n_batch x num hiddens of h_t)
+                [tensor variable] and recurrent
+            g_t = glimps output
+                = (n_batch x num hiddens of g_t)
+                [tensor variable]
 
-            parameters:
-              W_f_h_1 = (num hiddens of h_t x num hiddens of h_t)
-              W_f_h_2 = (num hiddens of g_t x num hiddens of h_t)
-              b_f_h = (num hiddens of h_t,)
+        parameters:
+            W_f_h_1 = (num hiddens of h_t x num hiddens of h_t)
+            W_f_h_2 = (num hiddens of g_t x num hiddens of h_t)
+            b_f_h = (num hiddens of h_t,)
         """
 
         h_t = tf.matmul(h_tm1, self.w_f_h_1) + tf.matmul(g_t, self.w_f_h_2)
@@ -260,14 +248,14 @@ class Ram(base_model.BaseModel):
                 = (n_batch x 2)
                 [tensor variable] and recurrent
 
-            inputs:
-              h_t = hidden states (output of core network)
-                  = (n_batch x num hiddens of h_t)
-                  [tensor variable] and recurrent
+        inputs:
+            h_t = hidden states (output of core network)
+                = (n_batch x num hiddens of h_t)
+                [tensor variable] and recurrent
 
-            parameters:
-              W_f_l = (num hiddens of h_t x 2)
-              b_f_l = (2,)
+        parameters:
+            W_f_l = (num hiddens of h_t x 2)
+            b_f_l = (2,)
 
         """
 
@@ -375,12 +363,10 @@ class Ram(base_model.BaseModel):
         loss2, grads2 = self.grad_supervised(prob, labels)
 
         loss = (1 - self.lambda_) * loss1 + self.lambda_ * loss2
-        #loss = loss1 + self.lambda_ * loss2
 
         grads = []
         for i in xrange(len(grads1)):
             grads.append((1 - self.lambda_) * grads1[i] + self.lambda_ * grads2[i])
-            #grads.append(grads1[i] + self.lambda_ * grads2[i])
 
         tvars = tf.trainable_variables()
         grads = zip(grads, tvars)
