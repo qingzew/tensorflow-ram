@@ -1,0 +1,5 @@
+*.pyc
+utils/*.pyc
+train
+utils
+
