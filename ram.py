@@ -41,7 +41,7 @@ import numpy as np
 # grad1 = 1 / M * sum_i_{1..M}{theano.grad( sum_t_{0..T}{logN(l_t | f_l(h_t))} ) * (R^i - b) )}
 #           where R^i = r_T^i = 1 (if correct) or 0 (if incorrect)
 #                 b = mean(R^i)  (the value function???)
-#                 b = sum_i_{1..M}{( theano.grad( sum_t_{0..T}{logN(l_t | f_l(h_t))} ) ** 2 ) * R^i } / sum_i_{1..M}{ theano.grad( sum_t_{0..T}{logN(l_t | f_l(h_t))} ) ** 2 }
+#                 b = sum_i_{1..M}{(grad( sum_t_{0..T}{logN(l_t | f_l(h_t))} ) ** 2 ) * R^i } / sum_i_{1..M}{ grad( sum_t_{0..T}{logN(l_t | f_l(h_t))} ) ** 2 }
 #                     (optimal baseline)
 # Step5b: supervised loss and its grad
 # loss2 = 1 / M * sum_i_{1..M} cross_entroy_loss(groundtruth, a_T)
